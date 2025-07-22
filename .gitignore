@@ -1,0 +1,10 @@
+build/
+cmake-build-*/
+
+CMakeChache.txt
+CMakeFiles/
+Makefile
+*.cmake
+
+.idea/
+*.iml

@@ -1,0 +1,8 @@
+{
+  "name" : "chip-8-interpreter",
+  "version" : "0.0.1",
+  "dependencies" : [ {
+    "name" : "sdl2",
+    "version>=" : "2.32.8"
+  } ]
+}
