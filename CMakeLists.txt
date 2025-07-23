@@ -8,3 +8,9 @@ find_package(SDL2 CONFIG REQUIRED)
 
 add_executable(CHIP_8_Interpreter
     main.c)
+
+add_executable(TEST_GAME
+    sdl_test.c)
+
+target_link_libraries(CHIP_8_Interpreter PRIVATE SDL2::SDL2 SDL2::SDL2main)
+target_link_libraries(TEST_GAME PRIVATE SDL2::SDL2 SDL2::SDL2main)
