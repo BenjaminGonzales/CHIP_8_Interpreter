@@ -2,8 +2,9 @@
 // Created by Benji on 7/21/2025.
 //
 #include <SDL2/SDL.h>
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 320
+#define SCREEN_WIDTH 64
+#define SCREEN_HEIGHT 32
+#define SCALING_FACTOR 10
 #define SDL_HINT_RENDER_SCALE_QUALITY 1
 
 typedef struct Emulator
@@ -32,8 +33,8 @@ int iSdl_init(emulator_t *p_emulator)
         "test_title_window",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        SCREEN_WIDTH,
-        SCREEN_HEIGHT,
+        SCREEN_WIDTH * SCALING_FACTOR,
+        SCREEN_HEIGHT * SCALING_FACTOR,
         0);
     if (p_emulator->window == NULL)
     {
@@ -50,6 +51,7 @@ int iSdl_init(emulator_t *p_emulator)
         printf("SDL_CreateRenderer Error: %s\n", SDL_GetError());
         return -1;
     }
+    SDL_RenderSetScale(p_emulator->renderer, SCALING_FACTOR, SCALING_FACTOR);
     return 0;
 }
 
@@ -80,6 +82,7 @@ int main(int argc, char *argv[])
 
     // main loop
     int loop = 1;
+
     while (loop)
     {
         SDL_Event event;
@@ -91,45 +94,47 @@ int main(int argc, char *argv[])
                 break;
             }
         }
-        // SDL_SetRenderDrawColor(emulator.renderer, 0, 0, 0, 255);
+        // SDL_SetRenderDrawColor(emulator.renderer, 255, 255, 255, 255);
         // SDL_RenderClear(emulator.renderer);
         SDL_SetRenderDrawColor(emulator.renderer, r, g, b, 255);
-        int test = SDL_RenderDrawLine(emulator.renderer, 0, y, SCREEN_WIDTH, y);
-        if (test)
-            printf("SDL_RenderDrawLine Error: %s\n", SDL_GetError());
+        SDL_RenderDrawPoint(emulator.renderer, x, y);
         SDL_RenderPresent(emulator.renderer);
 
-        x = (x + 1) % SCREEN_WIDTH;
-        y = (y + 1) % SCREEN_HEIGHT;
+        x += 1;
+        if (x >= SCREEN_WIDTH)
+        {
+            x = 0;
+            y = (y + 1) % SCREEN_HEIGHT;
+        }
 
         switch (color)
         {
             case RED:
                 r += 1;
-                if (r == 255)
-                {
-                    r = 0;
-                    color = GREEN;
-                }
-                break;
+            if (r == 255)
+            {
+                r = 0;
+                color = GREEN;
+            }
+            break;
             case GREEN:
                 g += 1;
-                if (g == 255)
-                {
-                    g = 0;
-                    color = BLUE;
-                }
-                break;
+            if (g == 255)
+            {
+                g = 0;
+                color = BLUE;
+            }
+            break;
             case BLUE:
                 b += 1;
-                if (b == 255)
-                {
-                    b = 0;
-                    color = RED;
-                }
-                break;
+            if (b == 255)
+            {
+                b = 0;
+                color = RED;
+            }
+            break;
         }
-        SDL_Delay(16);
+        SDL_Delay(32);
     }
     vSdl_shutdown(&emulator);
     exit(EXIT_SUCCESS);
