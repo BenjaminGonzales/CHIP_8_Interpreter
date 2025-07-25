@@ -52,6 +52,7 @@ int iSdl_init(emulator_t *p_emulator)
         return -1;
     }
     SDL_RenderSetScale(p_emulator->renderer, SCALING_FACTOR, SCALING_FACTOR);
+
     return 0;
 }
 
@@ -94,8 +95,8 @@ int main(int argc, char *argv[])
                 break;
             }
         }
-        // SDL_SetRenderDrawColor(emulator.renderer, 255, 255, 255, 255);
-        // SDL_RenderClear(emulator.renderer);
+        SDL_SetRenderDrawColor(emulator.renderer, 255, 255, 255, 255);
+        SDL_RenderClear(emulator.renderer);
         SDL_SetRenderDrawColor(emulator.renderer, r, g, b, 255);
         SDL_RenderDrawPoint(emulator.renderer, x, y);
         SDL_RenderPresent(emulator.renderer);
@@ -105,34 +106,6 @@ int main(int argc, char *argv[])
         {
             x = 0;
             y = (y + 1) % SCREEN_HEIGHT;
-        }
-
-        switch (color)
-        {
-            case RED:
-                r += 1;
-            if (r == 255)
-            {
-                r = 0;
-                color = GREEN;
-            }
-            break;
-            case GREEN:
-                g += 1;
-            if (g == 255)
-            {
-                g = 0;
-                color = BLUE;
-            }
-            break;
-            case BLUE:
-                b += 1;
-            if (b == 255)
-            {
-                b = 0;
-                color = RED;
-            }
-            break;
         }
         SDL_Delay(32);
     }

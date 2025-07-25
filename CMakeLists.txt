@@ -6,11 +6,15 @@ set(CMAKE_C_STANDARD 11)
 
 find_package(SDL2 CONFIG REQUIRED)
 
+add_library(chip8_CPU src/chip8_CPU.c)
+
 add_executable(CHIP_8_Interpreter
-    main.c)
+    main.c
+        src/chip8_CPU.c
+        include/chip8_CPU.h)
 
 add_executable(TEST_GAME
-    sdl_test.c)
+        src/sdl_test.c)
 
 target_link_libraries(CHIP_8_Interpreter PRIVATE SDL2::SDL2 SDL2::SDL2main)
 target_link_libraries(TEST_GAME PRIVATE SDL2::SDL2 SDL2::SDL2main)
