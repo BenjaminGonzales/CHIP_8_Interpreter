@@ -8,7 +8,7 @@
 int main(int argc, char* argv[])
 {
     struct chip8_cpu *emulator_handle = NULL;
-    emulator_handle = vInit_CHIP8();
+    emulator_handle = p_Init_CHIP8();
 
     for (int i = 0; i < 80; i++)
     {

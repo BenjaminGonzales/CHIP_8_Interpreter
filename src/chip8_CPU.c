@@ -46,7 +46,7 @@ uint8_t fonts[FONT_SIZE] =
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-chip8_cpu_t *vInit_CHIP8(void)
+chip8_cpu_t *p_Init_CHIP8(void)
 {
     chip8_cpu_t *toRet_chip8_cpu = NULL;
     toRet_chip8_cpu = malloc(sizeof(chip8_cpu_t));
@@ -61,7 +61,7 @@ chip8_cpu_t *vInit_CHIP8(void)
     return toRet_chip8_cpu;
 }
 
-uint8_t test_get_byte(chip8_cpu_t *emulator, int offset)
+uint8_t test_get_byte(const chip8_cpu_t *emulator, const int offset)
 {
     return emulator->memory[FONT_START_ADDRESS + offset];
 }

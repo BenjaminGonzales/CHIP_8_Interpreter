@@ -35,9 +35,9 @@
 typedef struct chip8_cpu chip8_cpu_t;
 
 // constructor and destructor
-chip8_cpu_t *vInit_CHIP8(void);
+chip8_cpu_t *p_Init_CHIP8(void);
 void vDestroy_CHIP8(chip8_cpu_t *emulator);
 
-uint8_t test_get_byte(chip8_cpu_t *emulator, int offset);
+uint8_t test_get_byte(const chip8_cpu_t *emulator, int offset);
 
 #endif //CHIP8_CPU_H
