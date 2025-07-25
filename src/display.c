@@ -1,22 +1,24 @@
 //
-// Created by Benji on 7/21/2025.
+// Created by Benji on 7/24/2025.
 //
+
+#include "../include/display.h"
 #include <SDL2/SDL.h>
 #define SCREEN_WIDTH 64
 #define SCREEN_HEIGHT 32
 #define SCALING_FACTOR 10
 #define SDL_HINT_RENDER_SCALE_QUALITY 1
 
-typedef struct Display
-{
+struct Display {
     SDL_Window *window;
     SDL_Renderer *renderer;
-} display_t;
+    uint32_t pixels[SCREEN_WIDTH * SCREEN_HEIGHT] = {0}; // apparently 32 bit ints work best with SDL(?)
+};
 
-void vSdl_shutdown(const display_t *emulator)
+void vSdl_shutdown(display_t const *display)
 {
-    SDL_DestroyRenderer(emulator->renderer);
-    SDL_DestroyWindow(emulator->window);
+    SDL_DestroyRenderer(display->renderer);
+    SDL_DestroyWindow(display->window);
     SDL_Quit();
 }
 
@@ -55,6 +57,9 @@ int iSdl_init(display_t *p_display)
 
     return 0;
 }
+
+
+
 
 int main(int argc, char *argv[])
 {

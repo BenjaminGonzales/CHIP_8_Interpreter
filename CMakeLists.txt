@@ -11,7 +11,9 @@ add_library(chip8_CPU src/chip8_CPU.c)
 add_executable(CHIP_8_Interpreter
     main.c
         src/chip8_CPU.c
-        include/chip8_CPU.h)
+        include/chip8_CPU.h
+        src/display.c
+        include/display.h)
 
 add_executable(TEST_GAME
         src/sdl_test.c)
