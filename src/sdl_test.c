@@ -84,6 +84,8 @@ int main(int argc, char *argv[])
     // main loop
     int loop = 1;
 
+    
+
     while (loop)
     {
         SDL_Event event;

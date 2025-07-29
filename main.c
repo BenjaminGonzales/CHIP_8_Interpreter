@@ -4,17 +4,22 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include "include/chip8_CPU.h"
+#include "include/display.h"
+
+int f_clear_screen = 0;
 
 int main(int argc, char* argv[])
 {
-    struct chip8_cpu *emulator_handle = NULL;
-    emulator_handle = p_Init_CHIP8();
+    struct chip8_cpu *chip8_cpu = p_Init_CHIP8();
+    display_t *p_display = p_display_init();
 
-    for (int i = 0; i < 80; i++)
+    // main loop, for now!
+    while (1)
     {
-        uint8_t test_int = test_get_byte(emulator_handle, i);
-        printf("%0X, ", test_int);
-        if ((i + 1) % 5 == 0) printf("\n");
+        uint16_t instruction = i_fetch_instruction(chip8_cpu);
+        decode(instruction);
     }
+
     return 0;
 }
+

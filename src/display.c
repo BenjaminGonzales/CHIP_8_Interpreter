@@ -12,7 +12,7 @@
 struct Display {
     SDL_Window *window;
     SDL_Renderer *renderer;
-    uint32_t pixels[SCREEN_WIDTH * SCREEN_HEIGHT] = {0}; // apparently 32 bit ints work best with SDL(?)
+    uint32_t pixels[SCREEN_WIDTH][SCREEN_HEIGHT]; // apparently 32 bit ints work best with SDL(?)
 };
 
 void vSdl_shutdown(display_t const *display)
@@ -54,66 +54,54 @@ int iSdl_init(display_t *p_display)
         return -1;
     }
     SDL_RenderSetScale(p_display->renderer, SCALING_FACTOR, SCALING_FACTOR);
-
     return 0;
 }
 
-
-
-
-int main(int argc, char *argv[])
+// returns a display struct w/ window & renderer. Returns NULL on failure.
+display_t *p_display_init(void)
 {
-    display_t emulator = {
-    .window = NULL,
-    .renderer = NULL
-    };
+    display_t *p_display_ret = NULL;
 
-    int init_status = iSdl_init(&emulator);
-    if (init_status != 0)
+    p_display_ret = calloc(sizeof(display_t), 1);
+    if (p_display_ret == NULL)
     {
-        vSdl_shutdown(&emulator);
-        printf("initialization failure!\n");
-        exit(EXIT_FAILURE);
+        perror("malloc failed on display struct allocation\n");
+        return NULL;
     }
+    p_display_ret->window = NULL;
+    p_display_ret->renderer = NULL;
 
-    int x = 0, y = 0, r = 0, g = 0, b = 0;
+    iSdl_init(p_display_ret);
+    return p_display_ret;
+}
 
-    enum shift_color
+int clear_screen(display_t *display)
+{
+    SDL_RenderClear(display->renderer);
+    return 0;
+}
+//
+int draw_internal(display_t *display, int x, int y)
+{
+    uint32_t pixel_start_on = display->pixels[x][y];
+    display->pixels[x][y] ^= 0xFFFFFFFF;
+    uint32_t pixel_end_on = display->pixels[x][y];
+
+    if (pixel_start_on && !pixel_end_on)
     {
-        RED,
-        GREEN,
-        BLUE,
-    };
-    enum shift_color color = RED;
-
-    // main loop
-    int loop = 1;
-
-    while (loop)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT)
-            {
-                loop = 0;
-                break;
-            }
-        }
-        SDL_SetRenderDrawColor(emulator.renderer, 255, 255, 255, 255);
-        SDL_RenderClear(emulator.renderer);
-        SDL_SetRenderDrawColor(emulator.renderer, r, g, b, 255);
-        SDL_RenderDrawPoint(emulator.renderer, x, y);
-        SDL_RenderPresent(emulator.renderer);
-
-        x += 1;
-        if (x >= SCREEN_WIDTH)
-        {
-            x = 0;
-            y = (y + 1) % SCREEN_HEIGHT;
-        }
-        SDL_Delay(32);
+        SDL_SetRenderDrawColor(display->renderer, 0, 0, 0, 255);
+        SDL_RenderDrawPoint(display->renderer, x, y);
+        return 1;
     }
-    vSdl_shutdown(&emulator);
-    exit(EXIT_SUCCESS);
+    if (!pixel_start_on && pixel_end_on)
+    {
+        SDL_SetRenderDrawColor(display->renderer, 255, 255, 255, 255);
+        SDL_RenderDrawPoint(display->renderer, x, y);
+    }
+    return 0;
+}
+int draw(display_t *display)
+{
+    SDL_RenderPresent(display->renderer);
+    return 0;
 }

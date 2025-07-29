@@ -31,6 +31,7 @@
 #define CHIP8_CPU_H
 
 #include <stdint.h>
+#include "display.h"
 
 typedef struct chip8_cpu chip8_cpu_t;
 
@@ -38,6 +39,17 @@ typedef struct chip8_cpu chip8_cpu_t;
 chip8_cpu_t *p_Init_CHIP8(void);
 void vDestroy_CHIP8(chip8_cpu_t *emulator);
 
-uint8_t test_get_byte(const chip8_cpu_t *emulator, int offset);
+
+uint16_t i_fetch_instruction(const chip8_cpu_t *emulator);
+void decode(chip8_cpu_t *emulator, uint16_t instruction);
+
+// instructions to decode
+void CLS(const chip8_cpu_t *emulator); // clear screen
+void RET(chip8_cpu_t *emulator); // return from subroutine
+void JP(chip8_cpu_t *emulator, int addr); // jump to location nnn (set PC to addr)
+void CALL(chip8_cpu_t *emulator, int addr); // call subroutine at nnn
+void SE(chip8_cpu_t *emulator, uint8_t first, uint8_t second); // skip next instruction
+void SNE(chip8_cpu_t *emulator, uint8_t first, uint8_t second); // skip next instruction, reverse condition
+void LD(chip8_cpu_t *emulator, uint8_t first, uint8_t second); // put value in register
 
 #endif //CHIP8_CPU_H
