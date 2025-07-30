@@ -160,11 +160,10 @@ uint8_t i_emulator_is_waiting(const chip8_cpu_t *emulator)
     return emulator->f_waiting_for_input;
 }
 
-
 /*
  *  functional section
- *      fetch & decode
- *      decode does basically all the work of the system!
+ *      fetch & decode,
+ *      decode basically all the work of the system!
  */
 uint16_t i_fetch_instruction(chip8_cpu_t *emulator)
 {
@@ -280,15 +279,28 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
         case 0xC:
             emulator->V[x] = rand() & kk;
             break;
-        case 0xD:
+        case 0xD: // Dxyn
             if (emulator->display != NULL)
             {
-                // TODO: Draw
-                for (int j = 0; j < emulator->V[y]; j++)
+                emulator->V[0xF] = 0;
+                const uint8_t sprite_x = emulator->V[x] & 63;
+                const uint8_t sprite_y = emulator->V[y] & 31;
+                for (int j = 0; j < n; j++)
                 {
-                    for (int i = 0; i < emulator->V[x]; i++)
+                    if (sprite_y + j >= 32)
+                        break;
+                    const uint8_t byte = emulator->memory[emulator->I + j];
+                    for (int i = 0; i < 8; i++)
                     {
-
+                        if (sprite_x + i >= 64)
+                            break;
+                        const uint8_t pixel = (byte & 0x80) >> i;
+                        if (pixel)
+                        {
+                            uint8_t flipped = draw_internal(emulator->display, sprite_x + i, sprite_y + j);
+                            if (!emulator->V[0xF] && flipped)
+                                emulator->V[0xF] = 1;
+                        }
                     }
                 }
             }

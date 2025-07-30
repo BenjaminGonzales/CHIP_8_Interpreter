@@ -83,6 +83,8 @@ int clear_screen(display_t *display)
 //
 int draw_internal(display_t *display, int x, int y)
 {
+
+
     uint32_t pixel_start_on = display->pixels[x][y];
     display->pixels[x][y] ^= 0xFFFFFFFF;
     uint32_t pixel_end_on = display->pixels[x][y];
