@@ -3,7 +3,8 @@
 //
 
 #include "../include/chip8_CPU.h"
-#include <stdlib.h>
+#include <time.h>
+
 #define START_PROGRAM_ADDRESS 0x200
 #define START_PROGRAM_ADDRESS_ETI 0x600
 #define FONT_START_ADDRESS 0x050 // convention
@@ -21,12 +22,67 @@ struct chip8_cpu
     uint16_t PC; // Program Counter
     uint8_t SP; // Stack Pointer 0x0 - 0xF
 
+    uint8_t keyboard_interrupt; // stores value of key in interrupt
+    // flags
+    uint8_t f_waiting_for_input;
+    uint8_t f_keyboard_interrupt;
+
     // display reference to send things like clear signal
     display_t *display;
 
+    uint8_t keyboard[16]; // 0-> not pressed !0-> pressed
     uint8_t memory[4096]; // 0x000 - 0xFFF
     uint16_t stack[16];
 };
+
+uint8_t keymap[16] =
+{
+    30, 31, 32, 33, // 1, 2, 3 ,4
+    20, 26, 8,  21, // q, w, e, r
+    4,  22, 7,  9,  // a, s, d, f
+    29, 27, 6,  25  // z, x, c, v
+};
+
+uint8_t map_scancode_to_key(uint8_t scancode)
+{
+    switch (scancode)
+    {
+        case 30:
+            return 1;
+        case 31:
+            return 2;
+        case 32:
+            return 3;
+        case 33:
+            return 0xC;
+        case 20:
+            return 4;
+        case 26:
+            return 5;
+        case 8:
+            return 6;
+        case 21:
+            return 0xD;
+        case 4:
+            return 7;
+        case 22:
+            return 8;
+        case 7:
+            return 9;
+        case 9:
+            return 0xE;
+        case 29:
+            return 0xA;
+        case 27:
+            return 0;
+        case 6:
+            return 0xB;
+        case 25:
+            return 0xF;
+        default:
+            return 0;
+    }
+}
 
 // 80 = 5 bytes per sprite * 16 sprites
 uint8_t fonts[FONT_SIZE] =
@@ -49,6 +105,12 @@ uint8_t fonts[FONT_SIZE] =
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
+/*
+ *  initialization
+ *      init chip8
+ *      set display: this is separate so that the emulator can run headless
+ */
+
 chip8_cpu_t *p_Init_CHIP8(void)
 {
     chip8_cpu_t *toRet_chip8_cpu = NULL;
@@ -61,6 +123,8 @@ chip8_cpu_t *p_Init_CHIP8(void)
     {
         toRet_chip8_cpu->memory[FONT_START_ADDRESS + i] = fonts[i];
     }
+
+    srand(time(NULL));
     return toRet_chip8_cpu;
 }
 
@@ -72,11 +136,36 @@ int set_display(chip8_cpu_t *emulator, display_t *display)
     return 0;
 }
 
-uint8_t test_get_byte(const chip8_cpu_t *emulator, const int offset)
+/*
+ *   Keyboard stuff!
+ *       handle interrupts (used by SDL event loop in main)
+ *       emulator waiting (used in instruction 0xFx0A, halting execution
+ *
+ */
+
+void v_handle_keyboard_interrupt(chip8_cpu_t *emulator, SDL_KeyboardEvent *event)
 {
-    return emulator->memory[FONT_START_ADDRESS + offset];
+    const uint8_t key = map_scancode_to_key(event->keysym.scancode);
+    emulator->keyboard[key] = event->state == SDL_KEYDOWN ? 1 : 0;
+    emulator-> keyboard_interrupt = key;
+    if (emulator->f_waiting_for_input)
+    {
+        emulator->f_keyboard_interrupt = 1; // we have successfully been interrupted
+        emulator->f_waiting_for_input = 0;
+    }
 }
 
+uint8_t i_emulator_is_waiting(const chip8_cpu_t *emulator)
+{
+    return emulator->f_waiting_for_input;
+}
+
+
+/*
+ *  functional section
+ *      fetch & decode
+ *      decode does basically all the work of the system!
+ */
 uint16_t i_fetch_instruction(chip8_cpu_t *emulator)
 {
     uint16_t instruction = 0;
@@ -95,7 +184,7 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
     const uint8_t kk = (instruction & 0x00FF); // byte; lowest 8 bits of instr
     uint16_t total = 0;
 
-    switch (instruction & 0xF000) // switch off of first 4 bits
+    switch ((instruction & 0xF000) >> 12) // switch off of first 4 bits
     {
         case 0:
             switch (nnn)
@@ -189,22 +278,31 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
             emulator->PC = nnn + emulator->V[0];
             break;
         case 0xC:
-            emulator->V[x] = 0 & kk;
+            emulator->V[x] = rand() & kk;
             break;
         case 0xD:
             if (emulator->display != NULL)
             {
                 // TODO: Draw
+                for (int j = 0; j < emulator->V[y]; j++)
+                {
+                    for (int i = 0; i < emulator->V[x]; i++)
+                    {
+
+                    }
+                }
             }
             break;
         case 0xE:
             switch (kk)
             {
                 case 0x9E: // SKP Vx
-                    // TODO: Keyboard input
+                    if (emulator->keyboard[emulator->V[x]] != 0)
+                        emulator->PC += 2;
                     break;
-                case 0xA1:
-                    // TODO: Keyboard input
+                case 0xA1: // SKNP Vx
+                    if (emulator->keyboard[emulator->V[x]] == 0)
+                        emulator->PC += 2;
                     break;
                 default:
                     break;
@@ -217,7 +315,15 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
                     emulator->V[x] = emulator->delay_timer;
                     break;
                 case 0x0A:
-                    // TODO: Keyboard input
+                    if (emulator->f_keyboard_interrupt)
+                    {
+                        emulator->V[x] = emulator->keyboard_interrupt;
+                        emulator->f_keyboard_interrupt = 0;
+                    }
+                    else
+                    {
+                        emulator->f_waiting_for_input = 1;
+                    }
                     break;
                 case 0x15:
                     emulator->delay_timer = emulator->V[x];

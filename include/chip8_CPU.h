@@ -30,26 +30,27 @@
 #ifndef CHIP8_CPU_H
 #define CHIP8_CPU_H
 
+#include <SDL_events.h>
 #include <stdint.h>
 #include "display.h"
 
 typedef struct chip8_cpu chip8_cpu_t;
+
+struct key
+{
+    int pressed;
+};
 
 // constructor and destructor
 chip8_cpu_t *p_Init_CHIP8(void);
 void vDestroy_CHIP8(chip8_cpu_t *emulator);
 
 
-uint16_t i_fetch_instruction(const chip8_cpu_t *emulator);
+uint16_t i_fetch_instruction(chip8_cpu_t *emulator);
 void decode(chip8_cpu_t *emulator, uint16_t instruction);
+int set_display(chip8_cpu_t *emulator, display_t *display);
 
-// instructions to decode
-void CLS(const chip8_cpu_t *emulator); // clear screen
-void RET(chip8_cpu_t *emulator); // return from subroutine
-void JP(chip8_cpu_t *emulator, int addr); // jump to location nnn (set PC to addr)
-void CALL(chip8_cpu_t *emulator, int addr); // call subroutine at nnn
-void SE(chip8_cpu_t *emulator, uint8_t first, uint8_t second); // skip next instruction
-void SNE(chip8_cpu_t *emulator, uint8_t first, uint8_t second); // skip next instruction, reverse condition
-void LD(chip8_cpu_t *emulator, uint8_t first, uint8_t second); // put value in register
+void v_handle_keyboard_interrupt(chip8_cpu_t *emulator, SDL_KeyboardEvent *event);
+uint8_t i_emulator_is_waiting(const chip8_cpu_t *emulator);
 
 #endif //CHIP8_CPU_H
