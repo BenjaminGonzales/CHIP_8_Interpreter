@@ -8,11 +8,23 @@
 
 int f_clear_screen = 0;
 
+
 int main(int argc, char* argv[])
 {
-    struct chip8_cpu *chip8_cpu = p_Init_CHIP8();
+    struct chip8_cpu *emulator = p_Init_CHIP8();
     display_t *p_display = p_display_init();
-    set_display(chip8_cpu, p_display);
+    set_display(emulator, p_display);
+
+    printf("%s\n", argv[1]);
+
+    FILE *infile = fopen(argv[1], "rb");
+    const struct gamefile *game = p_load_game_from_file(infile);
+    if (game == NULL)
+    {
+        perror("game read error!");
+        return -1;
+    }
+    v_load_rom(emulator, game);
 
     // main loop, for now!
     int loop = 1;
@@ -27,21 +39,22 @@ int main(int argc, char* argv[])
                     loop = 0;
                     break;
                 case SDL_KEYDOWN:
-                    v_handle_keyboard_interrupt(chip8_cpu, &event.key);
+                    v_handle_keyboard_interrupt(emulator, &event.key);
                     break;
                 case SDL_KEYUP:
-                    v_handle_keyboard_interrupt(chip8_cpu, &event.key);
+                    v_handle_keyboard_interrupt(emulator, &event.key);
                 default:
                     break;
             }
         }
 
-        const uint16_t instruction = i_fetch_instruction(chip8_cpu);
-        if (!i_emulator_is_waiting(chip8_cpu))
+        const uint16_t instruction = i_fetch_instruction(emulator);
+        if (!i_emulator_is_waiting(emulator))
         {
-            decode(chip8_cpu, instruction);
+            decode(emulator, instruction);
         }
-        SDL_Delay(64);
+        draw_thru_emulator(emulator);
+        SDL_Delay(32);
     }
 
     return 0;

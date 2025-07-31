@@ -4,11 +4,13 @@
 
 #include "../include/chip8_CPU.h"
 #include <time.h>
+#include <stdio.h>
 
 #define START_PROGRAM_ADDRESS 0x200
 #define START_PROGRAM_ADDRESS_ETI 0x600
 #define FONT_START_ADDRESS 0x050 // convention
 #define FONT_SIZE 80 // 5bytes x 16 sprites
+#define MAX_PROGRAM_SIZE 0xE00
 
 struct chip8_cpu
 {
@@ -35,13 +37,12 @@ struct chip8_cpu
     uint16_t stack[16];
 };
 
-uint8_t keymap[16] =
-{
+/*  keymap
     30, 31, 32, 33, // 1, 2, 3 ,4
     20, 26, 8,  21, // q, w, e, r
     4,  22, 7,  9,  // a, s, d, f
     29, 27, 6,  25  // z, x, c, v
-};
+*/
 
 uint8_t map_scancode_to_key(uint8_t scancode)
 {
@@ -124,8 +125,18 @@ chip8_cpu_t *p_Init_CHIP8(void)
         toRet_chip8_cpu->memory[FONT_START_ADDRESS + i] = fonts[i];
     }
 
+    // set Program Counter to where program will be loaded
+    toRet_chip8_cpu->PC = START_PROGRAM_ADDRESS;
+
+    // setting a random seed for 0xC--- instruction (suspect)
     srand(time(NULL));
     return toRet_chip8_cpu;
+}
+
+void vDestroy_CHIP8(chip8_cpu_t *emulator)
+{
+    // MIGHT NEED TO FREE DISPLAY
+    free(emulator);
 }
 
 int set_display(chip8_cpu_t *emulator, display_t *display)
@@ -160,6 +171,48 @@ uint8_t i_emulator_is_waiting(const chip8_cpu_t *emulator)
     return emulator->f_waiting_for_input;
 }
 
+// loading data
+
+struct gamefile *p_load_game_from_file(FILE *infile)
+{
+    if (infile == NULL)
+        return NULL;
+    struct gamefile *p_game = malloc (sizeof(struct gamefile));
+    if (!p_game)
+        return NULL;
+    p_game->size = 0;
+    p_game->data = NULL;
+
+    // get file length, reset file pointer to beginning
+    fseek(infile, 0, SEEK_END);
+    const long length = ftell(infile);
+    if (length > MAX_PROGRAM_SIZE)
+        return NULL;
+    rewind(infile);
+
+    p_game->data = malloc(sizeof(uint8_t) * length);
+    if (!p_game->data)
+        return NULL;
+
+    const size_t read_code = fread(p_game->data, sizeof(uint8_t), length, infile);
+    if (read_code == length)
+        printf("successfully read game data");
+    p_game->size = length;
+
+    return p_game;
+}
+
+void v_load_rom(chip8_cpu_t *emulator, const struct gamefile *game)
+{
+    if (emulator == NULL || game == NULL)
+        return;
+    emulator->PC = START_PROGRAM_ADDRESS;
+    for (int o = 0; o < game->size; o++)
+    {
+        emulator->memory[START_PROGRAM_ADDRESS + o] = game->data[o];
+    }
+}
+
 /*
  *  functional section
  *      fetch & decode,
@@ -172,6 +225,11 @@ uint16_t i_fetch_instruction(chip8_cpu_t *emulator)
     instruction |= emulator->memory[emulator->PC + 1];
     emulator->PC += 2;
     return instruction;
+}
+
+void draw_thru_emulator(const chip8_cpu_t *emulator)
+{
+    draw(emulator->display);
 }
 
 void decode(chip8_cpu_t *emulator, const uint16_t instruction)

@@ -36,21 +36,28 @@
 
 typedef struct chip8_cpu chip8_cpu_t;
 
-struct key
+struct gamefile
 {
-    int pressed;
+    uint8_t size;
+    uint8_t *data;
 };
 
-// constructor and destructor
+// constructor and destructor init stuff
 chip8_cpu_t *p_Init_CHIP8(void);
 void vDestroy_CHIP8(chip8_cpu_t *emulator);
-
-
-uint16_t i_fetch_instruction(chip8_cpu_t *emulator);
-void decode(chip8_cpu_t *emulator, uint16_t instruction);
 int set_display(chip8_cpu_t *emulator, display_t *display);
 
+// keyboard stuff
 void v_handle_keyboard_interrupt(chip8_cpu_t *emulator, SDL_KeyboardEvent *event);
 uint8_t i_emulator_is_waiting(const chip8_cpu_t *emulator);
+
+// loading data
+struct gamefile *p_load_game_from_file(FILE *infile);
+void v_load_rom(chip8_cpu_t *emulator, const struct gamefile *game);
+
+// functional stuff
+uint16_t i_fetch_instruction(chip8_cpu_t *emulator);
+void decode(chip8_cpu_t *emulator, uint16_t instruction);
+void draw_thru_emulator(const chip8_cpu_t *emulator);
 
 #endif //CHIP8_CPU_H
