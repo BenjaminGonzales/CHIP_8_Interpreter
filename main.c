@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
     display_t *p_display = p_display_init();
     set_display(emulator, p_display);
 
-    set_log_level(DEBUG);
+    // set_log_level(DEBUG);
 
     FILE *infile = fopen(argv[1], "rb");
     const struct gamefile *game = p_load_game_from_file(infile);

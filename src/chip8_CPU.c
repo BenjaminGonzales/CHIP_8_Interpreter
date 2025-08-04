@@ -453,7 +453,7 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
                     {
                         if (sprite_x + i >= 64)
                             break;
-                        const uint8_t pixel = (byte & 0x80) >> i;
+                        const uint8_t pixel = byte & 0x80 >> i;
                         if (pixel)
                         {
                             uint8_t flipped = draw_internal(emulator->display, sprite_x + i, sprite_y + j);
