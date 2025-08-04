@@ -5,9 +5,7 @@
 #include <SDL2/SDL.h>
 #include "include/chip8_CPU.h"
 #include "include/display.h"
-
-int f_clear_screen = 0;
-
+#include "include/logging.h"
 
 int main(int argc, char* argv[])
 {
@@ -15,7 +13,7 @@ int main(int argc, char* argv[])
     display_t *p_display = p_display_init();
     set_display(emulator, p_display);
 
-    printf("%s\n", argv[1]);
+    set_log_level(DEBUG);
 
     FILE *infile = fopen(argv[1], "rb");
     const struct gamefile *game = p_load_game_from_file(infile);

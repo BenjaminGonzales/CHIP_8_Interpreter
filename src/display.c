@@ -75,7 +75,7 @@ display_t *p_display_init(void)
     return p_display_ret;
 }
 
-int clear_screen(display_t *display)
+int clear_screen(const display_t *display)
 {
     SDL_RenderClear(display->renderer);
     return 0;
@@ -83,9 +83,9 @@ int clear_screen(display_t *display)
 //
 int draw_internal(display_t *display, int x, int y)
 {
-    uint32_t pixel_start_on = display->pixels[x][y];
+    const uint32_t pixel_start_on = display->pixels[x][y];
     display->pixels[x][y] ^= 0xFFFFFFFF;
-    uint32_t pixel_end_on = display->pixels[x][y];
+    const uint32_t pixel_end_on = display->pixels[x][y];
 
     if (pixel_start_on && !pixel_end_on)
     {
@@ -100,7 +100,7 @@ int draw_internal(display_t *display, int x, int y)
     }
     return 0;
 }
-int draw(display_t *display)
+int draw(const display_t *display)
 {
     SDL_RenderPresent(display->renderer);
     return 0;

@@ -38,7 +38,7 @@ typedef struct chip8_cpu chip8_cpu_t;
 
 struct gamefile
 {
-    uint8_t size;
+    long size;
     uint8_t *data;
 };
 

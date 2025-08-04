@@ -3,6 +3,7 @@
 //
 
 #include "../include/chip8_CPU.h"
+#include "../include/logging.h"
 #include <time.h>
 #include <stdio.h>
 
@@ -234,6 +235,13 @@ void draw_thru_emulator(const chip8_cpu_t *emulator)
 
 void decode(chip8_cpu_t *emulator, const uint16_t instruction)
 {
+    if (get_log_level(INFO))
+    {
+        printf("\ninstruction: %.4x", instruction);
+        printf("\n  instru first 4 bits: %x", (instruction & 0xF000) >> 12);
+        fflush(stdout);
+    }
+
     const uint16_t nnn = (instruction & 0x0FFF); // addr; lowest 12 bits.
     const uint8_t n = (instruction & 0x000F); // nibble; lowest 4 bits
     const uint8_t x = (instruction & 0x0F00) >> 8; // 4 lower bits of high byte
@@ -247,10 +255,19 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
             switch (nnn)
             {
                 case 0x0E0:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\nclearing display");
+                    }
                     if (emulator->display != NULL)
                         clear_screen(emulator->display);
                     break;
                 case 0x00EE:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     fetching program counter from stack %.4x", emulator->stack[emulator->SP]);
+                        printf("\n     decrementing stack counter: %d -> %d", emulator->SP, emulator->SP -1);
+                    }
                     emulator->PC = emulator->stack[emulator->SP];
                     emulator->SP -= 1;
                     break;
@@ -259,64 +276,128 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
             }
             break;
         case 1:
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     setting PC to %.4x", nnn);
+            }
             emulator->PC = nnn;
             break;
         case 2:
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     storing program counter on stack");
+            }
             emulator->SP += 1;
             emulator->stack[emulator->SP] = emulator->PC;
             emulator->PC = nnn;
             break;
         case 3:
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     skipping instruction if V[%d] (%.4x) = %.4x", x, emulator->V[x], kk);
+            }
             if (emulator->V[x] == kk)
                 emulator->PC += 2;
             break;
         case 4:
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     skipping instruction if V[%d] (%.4x) != %.4x", x, emulator->V[x], kk);
+            }
             if (emulator->V[x] != kk)
                 emulator->PC += 2;
             break;
         case 5:
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     skipping instruction if V[%d] (%.4x) = V[%d] (%.4x)", x, emulator->V[x], y, emulator->V[y]);
+            }
             if (emulator->V[x] == emulator->V[y])
                 emulator->PC += 2;
             break;
         case 6:
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     Setting V[%d] to %.4x", x, kk);
+            }
             emulator->V[x] = kk;
             break;
         case 7:
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     adding %.4x to V[%d] (%.4x)", kk, x, emulator->V[x]);
+            }
             emulator->V[x] += kk;
             break;
         case 8:
             switch (n)
             {
                 case 0:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     Setting V[%d] equal to value in V[%d] (%.4x)", x, y, emulator->V[y]);
+                    }
                     emulator->V[x] = emulator->V[y];
                     break;
                 case 1:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     boolean OR'ing V[%d] (%.4x) and V[%d] (%.4x)", x, emulator->V[x], y, emulator->V[y]);
+                    }
                     emulator->V[x] |= emulator->V[y];
                     break;
                 case 2:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     boolean AND'ing V[%d] (%.4x) and V[%d] (%.4x)", x, emulator->V[x], y, emulator->V[y]);
+                    }
                     emulator->V[x] &= emulator->V[y];
                     break;
                 case 3:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     boolean XOR'ing V[%d] (%.4x) and V[%d] (%.4x)", x, emulator->V[x], y, emulator->V[y]);
+                    }
                     emulator->V[x] ^= emulator->V[y];
                     break;
                 case 4: // ADD
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     Adding V[%d] (%.4x) and V[%d] (%.4x)", x, emulator->V[x], y, emulator->V[y]);
+                    }
                     total = emulator->V[x] + emulator->V[y];
                     emulator->V[x] += emulator->V[y];
                     emulator->V[0xF] = total > 255 ? 1 : 0;
                     break;
                 case 5: // SUB Vx, Vy
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     Subtracting V[%d] (%.4x) and V[%d] (%.4x)", x, emulator->V[x], y, emulator->V[y]);
+                    }
                     emulator->V[0xF] = emulator->V[x] > emulator->V[y] ? 1 : 0;
                     emulator->V[x] -= emulator->V[y];
                     break;
                 case 6: // shift right
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     Shifting V[%d] (%.4x) 1 bit to the right", x, emulator->V[x]);
+                    }
                     emulator->V[0xF] = emulator->V[x] & 0x1 ? 1 : 0;
                     emulator->V[x] >>= 1;
                     break;
                 case 7: // SUBN Vx, Vy
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     Subtracting V[%d] (%.4x) and V[%d] (%.4x)", y, emulator->V[y], x, emulator->V[x]);
+                    }
                     emulator->V[0xF] = emulator->V[y] > emulator->V[x] ? 1 : 0;
                     emulator->V[x] = emulator->V[y] - emulator->V[x];
                     break;
                 case 0xE:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     Shifting V[%d] (%.4x) 1 bit to the left", x, emulator->V[x]);
+                    }
                     emulator->V[0xF] = emulator->V[x] & 0x80 ? 1 : 0;
                     emulator->V[x] <<= 1;
                     break;
@@ -325,19 +406,39 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
             }
             break;
         case 9:
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     skipping instruction if V[%d] (%.4x) != V[%d] (%.4x)", x, emulator->V[x], y, emulator->V[y]);
+            }
             if (emulator->V[x] != emulator->V[y])
                 emulator->PC += 2;
             break;
         case 0xA:
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     Setting I register to %.4x", nnn);
+            }
             emulator->I = nnn;
             break;
         case 0xB:
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     Setting PC to nnn (%.4d) + V[0] (%.4x)", nnn, emulator->V[0]);
+            }
             emulator->PC = nnn + emulator->V[0];
             break;
         case 0xC:
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     setting V[%d] to random number", x);
+            }
             emulator->V[x] = rand() & kk;
             break;
         case 0xD: // Dxyn
+            if (get_log_level(DEBUG))
+            {
+                printf("\n     Draw!");
+            }
             if (emulator->display != NULL)
             {
                 emulator->V[0xF] = 0;
@@ -367,10 +468,18 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
             switch (kk)
             {
                 case 0x9E: // SKP Vx
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     check if %d is pressed", emulator->V[x]);
+                    }
                     if (emulator->keyboard[emulator->V[x]] != 0)
                         emulator->PC += 2;
                     break;
                 case 0xA1: // SKNP Vx
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     check if %d is NOT pressed", emulator->V[x]);
+                    }
                     if (emulator->keyboard[emulator->V[x]] == 0)
                         emulator->PC += 2;
                     break;
@@ -382,9 +491,17 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
             switch (kk)
             {
                 case 0x07:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     store delay timer (%d) in V[%d]", emulator->delay_timer, x);
+                    }
                     emulator->V[x] = emulator->delay_timer;
                     break;
                 case 0x0A:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     keyboard interrupt request");
+                    }
                     if (emulator->f_keyboard_interrupt)
                     {
                         emulator->V[x] = emulator->keyboard_interrupt;
@@ -396,31 +513,59 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
                     }
                     break;
                 case 0x15:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     set delay timer to V[%d] (%.4x)", x, emulator->V[x]);
+                    }
                     emulator->delay_timer = emulator->V[x];
                     break;
                 case 0x18:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     set sound timer to V[%d] (%.4x)", x, emulator->V[x]);
+                    }
                     emulator->sound_timer = emulator->V[x];
                     break;
                 case 0x1E:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     add V[%d] (%.4x) to I register (%.4x)", x, emulator->V[x], emulator->I);
+                    }
                     emulator->I += emulator->V[x];
                     break;
                 case 0x29:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     | I reg to mem addr (%.4x)", emulator->memory[FONT_START_ADDRESS + emulator->V[x]]);
+                    }
                     emulator->I |= emulator->memory[FONT_START_ADDRESS + emulator->V[x]];
                 // emulator->I |= emulator->memory[FONT_START_ADDRESS + emulator->V[x] + 1];
                     break;
                 case 0x33: // LD B, Vx
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     store BCD rep of value in V[%d]", x);
+                    }
                     int val = emulator->V[x];
                     emulator->memory[emulator->I] = val % 1000 / 100;
                     emulator->memory[emulator->I + 1] = val % 100 / 10;
                     emulator->memory[emulator->I + 2] = val % 10;
                     break;
                 case 0x55:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     Store memory!");
+                    }
                     for (int i = 0; i <= 0xF; i++)
                     {
                         emulator->memory[emulator->I + i] = emulator->V[i];
                     }
                     break;
                 case 0x65:
+                    if (get_log_level(DEBUG))
+                    {
+                        printf("\n     load memory!");
+                    }
                     for (int i = 0; i <= 0xF; i++)
                     {
                         emulator->V[i] = emulator->memory[emulator->I + i];
@@ -432,6 +577,10 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
             break;
         default:
             break;
+    }
+    if (get_log_level(DEBUG))
+    {
+        fflush(stdout);
     }
 }
 
