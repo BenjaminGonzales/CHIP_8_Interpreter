@@ -16,6 +16,7 @@ void v_display_destroy(display_t *display);
 int clear_screen(const display_t *display);
 int draw_internal(display_t *display, int x, int y);
 int draw(const display_t *display);
+int make_sound(const display_t *display);
 
 #endif //DISPLAY_H
 

@@ -13,7 +13,17 @@ int main(int argc, char* argv[])
     display_t *p_display = p_display_init();
     set_display(emulator, p_display);
 
-    // set_log_level(DEBUG);
+    if (argc == 3)
+    {
+        if (strcmp(argv[2], "debug") == 0)
+            set_log_level(DEBUG);
+    }
+    else if (argc != 2)
+    {
+        printf("bad!");
+        exit(EXIT_SUCCESS);
+    }
+
 
     FILE *infile = fopen(argv[1], "rb");
     const struct gamefile *game = p_load_game_from_file(infile);
@@ -37,9 +47,11 @@ int main(int argc, char* argv[])
                     loop = 0;
                     break;
                 case SDL_KEYDOWN:
+                    printf("keydown\n");
                     v_handle_keyboard_interrupt(emulator, &event.key);
                     break;
                 case SDL_KEYUP:
+                    printf("keyup\n");
                     v_handle_keyboard_interrupt(emulator, &event.key);
                 default:
                     break;
@@ -52,7 +64,7 @@ int main(int argc, char* argv[])
             decode(emulator, instruction);
         }
         draw_thru_emulator(emulator);
-        SDL_Delay(32);
+        SDL_Delay(16);
     }
 
     return 0;

@@ -100,8 +100,14 @@ int draw_internal(display_t *display, int x, int y)
     }
     return 0;
 }
+
 int draw(const display_t *display)
 {
     SDL_RenderPresent(display->renderer);
     return 0;
+}
+
+int make_sound(const display_t *display)
+{
+    return 1;
 }

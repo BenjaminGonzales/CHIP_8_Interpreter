@@ -158,7 +158,7 @@ int set_display(chip8_cpu_t *emulator, display_t *display)
 void v_handle_keyboard_interrupt(chip8_cpu_t *emulator, SDL_KeyboardEvent *event)
 {
     const uint8_t key = map_scancode_to_key(event->keysym.scancode);
-    emulator->keyboard[key] = event->state == SDL_KEYDOWN ? 1 : 0;
+    emulator->keyboard[key] = event->type == SDL_KEYDOWN ? 1 : 0;
     emulator-> keyboard_interrupt = key;
     if (emulator->f_waiting_for_input)
     {
@@ -235,11 +235,9 @@ void draw_thru_emulator(const chip8_cpu_t *emulator)
 
 void decode(chip8_cpu_t *emulator, const uint16_t instruction)
 {
-    if (get_log_level(INFO))
+    if (get_log_level(DEBUG))
     {
         printf("\ninstruction: %.4x", instruction);
-        printf("\n  instru first 4 bits: %x", (instruction & 0xF000) >> 12);
-        fflush(stdout);
     }
 
     const uint16_t nnn = (instruction & 0x0FFF); // addr; lowest 12 bits.
@@ -578,6 +576,16 @@ void decode(chip8_cpu_t *emulator, const uint16_t instruction)
         default:
             break;
     }
+    if (emulator-> delay_timer != 0)
+    {
+        emulator->delay_timer -= 1;
+    }
+    if (emulator-> sound_timer != 0)
+    {
+        make_sound(emulator->display);
+        emulator->sound_timer -= 1;
+    }
+
     if (get_log_level(DEBUG))
     {
         fflush(stdout);
