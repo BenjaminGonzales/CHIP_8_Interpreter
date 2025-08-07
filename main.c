@@ -3,16 +3,14 @@
 //
 #include <stdio.h>
 #include <SDL2/SDL.h>
+// #include <SDL2/SDL_ttf.h>
 #include "include/chip8_CPU.h"
 #include "include/display.h"
 #include "include/logging.h"
 
+
 int main(int argc, char* argv[])
 {
-    struct chip8_cpu *emulator = p_Init_CHIP8();
-    display_t *p_display = p_display_init();
-    set_display(emulator, p_display);
-
     if (argc == 3)
     {
         if (strcmp(argv[2], "debug") == 0)
@@ -23,6 +21,10 @@ int main(int argc, char* argv[])
         printf("bad!");
         exit(EXIT_SUCCESS);
     }
+
+    struct chip8_cpu *emulator = p_Init_CHIP8();
+    display_t *p_display = p_display_init(argv[1]);
+    // set_display(emulator, p_display);
 
 
     FILE *infile = fopen(argv[1], "rb");
@@ -47,11 +49,9 @@ int main(int argc, char* argv[])
                     loop = 0;
                     break;
                 case SDL_KEYDOWN:
-                    printf("keydown\n");
                     v_handle_keyboard_interrupt(emulator, &event.key);
                     break;
                 case SDL_KEYUP:
-                    printf("keyup\n");
                     v_handle_keyboard_interrupt(emulator, &event.key);
                 default:
                     break;

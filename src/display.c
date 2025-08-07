@@ -12,7 +12,7 @@
 struct Display {
     SDL_Window *window;
     SDL_Renderer *renderer;
-    uint32_t pixels[SCREEN_WIDTH][SCREEN_HEIGHT]; // apparently 32 bit ints work best with SDL(?)
+    uint32_t pixels[SCREEN_HEIGHT][SCREEN_WIDTH]; // apparently 32 bit ints work best with SDL(?)
 };
 
 void vSdl_shutdown(display_t const *display)
@@ -22,7 +22,7 @@ void vSdl_shutdown(display_t const *display)
     SDL_Quit();
 }
 
-int iSdl_init(display_t *p_display)
+int iSdl_init(display_t *p_display, const char *window_title)
 {
     int init_status = SDL_Init(SDL_INIT_EVERYTHING); // status 0 = success, < 0 = error
     if (init_status < 0)
@@ -32,7 +32,7 @@ int iSdl_init(display_t *p_display)
     }
 
     p_display->window = SDL_CreateWindow(
-        "test_title_window",
+        window_title,
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
         SCREEN_WIDTH * SCALING_FACTOR,
@@ -57,8 +57,17 @@ int iSdl_init(display_t *p_display)
     return 0;
 }
 
+display_t *p_game_select_window()
+{
+    display_t *to_return = malloc(sizeof(display_t));
+
+    SDL_CreateWindowAndRenderer(1600, 900,0, &to_return->window, &to_return->renderer);
+    SDL_SetWindowTitle(to_return->window,"game select");
+    return to_return;
+}
+
 // returns a display struct w/ window & renderer. Returns NULL on failure.
-display_t *p_display_init(void)
+display_t *p_display_init(const char *title)
 {
     display_t *p_display_ret = NULL;
 
@@ -71,21 +80,30 @@ display_t *p_display_init(void)
     p_display_ret->window = NULL;
     p_display_ret->renderer = NULL;
 
-    iSdl_init(p_display_ret);
+    iSdl_init(p_display_ret, title);
     return p_display_ret;
 }
 
-int clear_screen(const display_t *display)
+int clear_screen(display_t *display)
 {
+    for (int y = 0; y < SCREEN_HEIGHT; y++)
+    {
+        for (int x = 0; x < SCREEN_WIDTH; x++)
+        {
+            display->pixels[y][x] = 0;
+        }
+    }
+
+    SDL_SetRenderDrawColor(display->renderer, 0, 0, 0, 255);
     SDL_RenderClear(display->renderer);
     return 0;
 }
-//
+
 int draw_internal(display_t *display, int x, int y)
 {
-    const uint32_t pixel_start_on = display->pixels[x][y];
-    display->pixels[x][y] ^= 0xFFFFFFFF;
-    const uint32_t pixel_end_on = display->pixels[x][y];
+    const uint32_t pixel_start_on = display->pixels[y][x];
+    display->pixels[y][x] ^= 0xFFFFFFFF;
+    const uint32_t pixel_end_on = display->pixels[y][x];
 
     if (pixel_start_on && !pixel_end_on)
     {
@@ -103,7 +121,8 @@ int draw_internal(display_t *display, int x, int y)
 
 int draw(const display_t *display)
 {
-    SDL_RenderPresent(display->renderer);
+    if (display)
+        SDL_RenderPresent(display->renderer);
     return 0;
 }
 

@@ -9,11 +9,11 @@
 typedef struct Display display_t;
 
 // constructor & descructor
-display_t *p_display_init(void);
+display_t *p_display_init(const char *title);
 void v_display_destroy(display_t *display);
 
 // functions
-int clear_screen(const display_t *display);
+int clear_screen(display_t *display);
 int draw_internal(display_t *display, int x, int y);
 int draw(const display_t *display);
 int make_sound(const display_t *display);
